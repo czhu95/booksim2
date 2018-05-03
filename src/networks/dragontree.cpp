@@ -24,38 +24,47 @@ DragonTree::~DragonTree() {
 
 void DragonTree::_ComputeSize(const Configuration& config) {
   _k = config.GetInt("k");
+  int _n = config.GetInt("n");
   gK = 0;
-  _nodes = 0;
+  _nodes = powi( _k, _n );
   _size = 0;
   _channels = 0;
 }
 
-void DragonTree::RegisterRoutingFunctions() {}
+void DragonTree::RegisterRoutingFunctions() {
+  gRoutingFunctionMap["ran_min_dragontree"] = &min_flatfly;
+}
 
 void DragonTree::_BuildNet(const Configuration& config) {
-  BookSimConfig config_ftree, config_ffly;
-  cout << "Parse ftree" << endl;
-  config_ftree.ParseFile("config_ftree.config");
-  _fattree = new FatTree(config_ftree, "dragontree-fattree");
+  Configuration config_ = Configuration(config);
+  cout << "Build ftree" << endl;
+  config_.AddStrField("topology", "fattree");
+  config_.AddStrField("routing_function", "nca");
+  _fattree = Network::New(config_, "dragontree-fattree");
   
-  cout << "Parse ffly" << endl;
-  config_ffly.ParseFile("config_ffly.config");
-  _flatfly = new FlatFlyOnChip(config_ffly, "dragontree-flatfly");
+  cout << "Build ffly" << endl;
+  config_.AddStrField("topology", "flatfly");
+  config_.AddStrField("routing_function", "ran_min");
+  _flatfly = Network::New(config_, "dragontree-flatfly");
+  config_.AddStrField("topology", "dragontree");
+
+  _timed_modules.push_back(_fattree);
+  _timed_modules.push_back(_flatfly);
 
 }
 
 void DragonTree::WriteFlit(Flit *f, int source) {
-  _fattree->WriteFlit(f, source);
+  _flatfly->WriteFlit(f, source);
 }
 
 void DragonTree::WriteCredit(Credit *c, int dest) {
-  _fattree->WriteCredit(c, dest);
+  _flatfly->WriteCredit(c, dest);
 }
 
 Flit* DragonTree::ReadFlit( int dest ) {
-  return _fattree->ReadFlit(dest);
+  return _flatfly->ReadFlit(dest);
 }
 
 Credit* DragonTree::ReadCredit( int source ) {
-  return _fattree->ReadCredit(source);
+  return _flatfly->ReadCredit(source);
 }
