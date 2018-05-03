@@ -6,15 +6,20 @@
 class DragonTree : public Network {
 
   int _k;
-  Network *_fattree_net, *_flatfly_net;
+  Network *_fattree, *_flatfly;
 
-  void _ComputeSize(const Configureation& config);
+  void _ComputeSize(const Configuration& config);
   void _BuildNet(const Configuration& config);
 
 public:
   DragonTree(const Configuration& config, const string& name);
   ~DragonTree();
   static void RegisterRoutingFunctions();
+
+  virtual Credit* ReadCredit( int source );
+  virtual Flit* ReadFlit( int dest );
+  virtual void WriteFlit(Flit *f, int source);
+  virtual void WriteCredit(Credit *c, int dest);
 };
 
 #endif

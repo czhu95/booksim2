@@ -63,6 +63,7 @@ public:
   static void RegisterRoutingFunctions();
   void InsertRandomFaults( const Configuration &config );
 
+
 };
 int dragonfly_port(int rID, int source, int dest);
 

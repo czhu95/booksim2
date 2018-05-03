@@ -5,8 +5,9 @@
 
 #include "dragontree.hpp"
 #include "fattree.hpp"
-#include "flatfly.hpp"
+#include "flatfly_onchip.hpp"
 #include "misc_utils.hpp"
+#include "../booksim_config.hpp"
 
 DragonTree::DragonTree(const Configuration& config, const string& name)
     : Network(config, name) {
@@ -23,16 +24,38 @@ DragonTree::~DragonTree() {
 
 void DragonTree::_ComputeSize(const Configuration& config) {
   _k = config.GetInt("k");
-  gK = _k;
-  _nodes = _k * _k;
-  // _size = _k + _k / 2 + _k * _k;
-  // _channels = _k * _k;
+  gK = 0;
+  _nodes = 0;
+  _size = 0;
+  _channels = 0;
 }
 
 void DragonTree::RegisterRoutingFunctions() {}
 
 void DragonTree::_BuildNet(const Configuration& config) {
-  cout << "Dragon Tree" << endl;
-  _fattree = new FatTree(config, "dragontree-fattree");
-  _flatfly = new FlatFlyOnChip(config, "dragontree-flatfly");
+  BookSimConfig config_ftree, config_ffly;
+  cout << "Parse ftree" << endl;
+  config_ftree.ParseFile("config_ftree.config");
+  _fattree = new FatTree(config_ftree, "dragontree-fattree");
+  
+  cout << "Parse ffly" << endl;
+  config_ffly.ParseFile("config_ffly.config");
+  _flatfly = new FlatFlyOnChip(config_ffly, "dragontree-flatfly");
+
+}
+
+void DragonTree::WriteFlit(Flit *f, int source) {
+  _fattree->WriteFlit(f, source);
+}
+
+void DragonTree::WriteCredit(Credit *c, int dest) {
+  _fattree->WriteCredit(c, dest);
+}
+
+Flit* DragonTree::ReadFlit( int dest ) {
+  return _fattree->ReadFlit(dest);
+}
+
+Credit* DragonTree::ReadCredit( int source ) {
+  return _fattree->ReadCredit(source);
 }
