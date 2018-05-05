@@ -17,7 +17,8 @@ DragonTree::DragonTree(const Configuration& config, const string& name)
 }
 
 DragonTree::~DragonTree() {
-  delete _fattree, _flatfly;
+  delete _fattree;
+  delete _flatfly;
   _fattree = NULL;
   _flatfly = NULL;
 }
@@ -44,27 +45,70 @@ void DragonTree::_BuildNet(const Configuration& config) {
   
   cout << "Build ffly" << endl;
   config_.AddStrField("topology", "flatfly");
-  config_.AddStrField("routing_function", "ran_min");
+  config_.AddStrField("routing_function", "xyyx");
   _flatfly = Network::New(config_, "dragontree-flatfly");
   config_.AddStrField("topology", "dragontree");
 
   _timed_modules.push_back(_fattree);
   _timed_modules.push_back(_flatfly);
 
+  _policy = config.GetStr("injection_policy");
+
 }
 
 void DragonTree::WriteFlit(Flit *f, int source) {
-  _flatfly->WriteFlit(f, source);
+  if (_policy == "flatfly") {
+    _flatfly->WriteFlit(f, source);
+  }
+  else if (_policy == "fattree") {
+    _fattree->WriteFlit(f, source);
+  }
+  else {
+    cerr << "Unknown injection policy" << endl;
+    exit(-1);
+  }
+
 }
 
 void DragonTree::WriteCredit(Credit *c, int dest) {
-  _flatfly->WriteCredit(c, dest);
+  if (_policy == "flatfly") {
+    _flatfly->WriteCredit(c, dest);
+  }
+  else if (_policy == "fattree") {
+    _fattree->WriteCredit(c, dest);
+  }
+  else {
+    cerr << "Unknown injection policy" << endl;
+    exit(-1);
+  }
 }
 
 Flit* DragonTree::ReadFlit( int dest ) {
-  return _flatfly->ReadFlit(dest);
+  Flit* flit_;
+  if (_policy == "flatfly") {
+    flit_ = _flatfly->ReadFlit(dest);
+  }
+  else if (_policy == "fattree") {
+    flit_ = _fattree->ReadFlit(dest);
+  }
+  else {
+    cerr << "Unknown injection policy" << endl;
+    exit(-1);
+  }
+  return flit_;
 }
 
 Credit* DragonTree::ReadCredit( int source ) {
-  return _flatfly->ReadCredit(source);
+  Credit* credit_;
+  if (_policy == "flatfly") {
+    credit_ = _flatfly->ReadCredit(source);
+  }
+  else if (_policy == "fattree") {
+    credit_ = _fattree->ReadCredit(source);
+  }
+  else {
+    cerr << "Unknown injection policy" << endl;
+    exit(-1);
+  }
+  return credit_;
 }

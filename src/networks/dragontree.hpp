@@ -7,6 +7,7 @@ class DragonTree : public Network {
 
   int _k;
   Network *_fattree, *_flatfly;
+  string _policy;
 
   void _ComputeSize(const Configuration& config);
   void _BuildNet(const Configuration& config);

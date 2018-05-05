@@ -166,6 +166,7 @@ BookSimConfig::BookSimConfig( )
 
   _float_map["injection_rate"]       = 0.1;
   AddStrField("injection_rate", ""); // workaraound to allow for vector specification
+  AddStrField("injection_policy", "deterministic"); // policy for dragontree
 
   _int_map["injection_rate_uses_flits"] = 0;
 

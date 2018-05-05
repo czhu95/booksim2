@@ -113,7 +113,7 @@ use_read_write = 0;
 
 batch_size = 10000;
 
-injection_rate = 0.78;
+injection_rate = 0.01;
 
 sim_type = latency;
 
@@ -121,11 +121,5 @@ speculative = 0;
 
 print_activity = 0;
 
+injection_policy = flatfly;
 
-
-read_request_size=1;
-read_reply_size=4;
-write_request_size=4;
-write_reply_size=1;
-
-sim_power = 0;
