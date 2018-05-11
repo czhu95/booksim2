@@ -14,6 +14,7 @@ DragonTree::DragonTree(const Configuration& config, const string& name)
   _ComputeSize(config);
   _Alloc();
   _BuildNet(config);
+  nn = 2;
 }
 
 DragonTree::~DragonTree() {

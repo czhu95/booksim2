@@ -72,6 +72,7 @@ protected:
   void _Alloc( );
 
 public:
+  int nn;
   Network( const Configuration &config, const string & name );
   virtual ~Network( );
 

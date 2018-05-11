@@ -234,11 +234,11 @@ TrafficManager::TrafficManager( const Configuration &config, const vector<Networ
 
     // ============ Injection VC states  ============ 
 
-    _buf_states.resize(_nodes);
-    _last_vc.resize(_nodes);
-    _last_class.resize(_nodes);
+    _buf_states.resize(_nodes * _net[0]->nn);
+    _last_vc.resize(_nodes * _net[0]->nn);
+    _last_class.resize(_nodes * _net[0]->nn);
 
-    for ( int source = 0; source < _nodes; ++source ) {
+    for ( int source = 0; source < _nodes * _net[0]->nn; ++source ) {
         _buf_states[source].resize(_subnets);
         _last_class[source].resize(_subnets, 0);
         _last_vc[source].resize(_subnets);
@@ -966,7 +966,9 @@ void TrafficManager::_Step( )
   
     for ( int subnet = 0; subnet < _subnets; ++subnet ) {
         for ( int n = 0; n < _nodes; ++n ) {
-            Flit * const f = _net[subnet]->ReadFlit( n );
+          for ( int subn = 0; subn < _net[0]->nn; ++subn) {
+            int fake_nodeid = subn * _nodes + n;
+            Flit * const f = _net[subnet]->ReadFlit( fake_nodeid );
             if ( f ) {
                 if(f->watch) {
                     *gWatchOut << GetSimTime() << " | "
@@ -976,7 +978,7 @@ void TrafficManager::_Step( )
                                << " from VC " << f->vc
                                << "." << endl;
                 }
-                flits[subnet].insert(make_pair(n, f));
+                flits[subnet].insert(make_pair(fake_nodeid, f));
                 if((_sim_state == warming_up) || (_sim_state == running)) {
                     ++_accepted_flits[f->cl][n];
                     if(f->tail) {
@@ -985,7 +987,7 @@ void TrafficManager::_Step( )
                 }
             }
 
-            Credit * const c = _net[subnet]->ReadCredit( n );
+            Credit * const c = _net[subnet]->ReadCredit( fake_nodeid );
             if ( c ) {
 #ifdef TRACK_FLOWS
                 for(set<int>::const_iterator iter = c->vc.begin(); iter != c->vc.end(); ++iter) {
@@ -997,9 +999,10 @@ void TrafficManager::_Step( )
                     --_outstanding_credits[cl][subnet][n];
                 }
 #endif
-                _buf_states[n][subnet]->ProcessCredit(c);
+                _buf_states[fake_nodeid][subnet]->ProcessCredit(c);
                 c->Free();
             }
+          }
         }
         _net[subnet]->ReadInputs( );
     }
@@ -1008,32 +1011,20 @@ void TrafficManager::_Step( )
         _Inject();
     }
 
+    assert(!_hold_switch_for_packet);
     for(int subnet = 0; subnet < _subnets; ++subnet) {
 
         for(int n = 0; n < _nodes; ++n) {
+          for(int i = 1; i <= _classes; ++i) {
+            for ( int subn = 0; subn < _net[0]->nn; ++subn) {
+                int fake_nodeid = subn * _nodes + n;
 
-            Flit * f = NULL;
+                Flit * f = NULL;
 
-            BufferState * const dest_buf = _buf_states[n][subnet];
+                BufferState * const dest_buf = _buf_states[fake_nodeid][subnet];
 
-            int const last_class = _last_class[n][subnet];
+                int const last_class = _last_class[fake_nodeid][subnet];
 
-            int class_limit = _classes;
-
-            if(_hold_switch_for_packet) {
-                list<Flit *> const & pp = _partial_packets[n][last_class];
-                if(!pp.empty() && !pp.front()->head && 
-                   !dest_buf->IsFullFor(pp.front()->vc)) {
-                    f = pp.front();
-                    assert(f->vc == _last_vc[n][subnet][last_class]);
-
-                    // if we're holding the connection, we don't need to check that class 
-                    // again in the for loop
-                    --class_limit;
-                }
-            }
-
-            for(int i = 1; i <= class_limit; ++i) {
 
                 int const c = (last_class + i) % _classes;
 
@@ -1233,6 +1224,7 @@ void TrafficManager::_Step( )
                 _net[subnet]->WriteFlit(f, n);
 	
             }
+        }
         }
     }
 
