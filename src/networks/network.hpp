@@ -99,6 +99,8 @@ public:
   void DumpChannelMap( ostream & os = cout, string const & prefix = "" ) const;
   void DumpNodeMap( ostream & os = cout, string const & prefix = "" ) const;
 
+  virtual int ChooseSubnet(const Flit* f, int source) const { return 0; }
+
   int NumChannels() const {return _channels;}
   const vector<FlitChannel *> & GetInject() {return _inject;}
   FlitChannel * GetInject(int index) {return _inject[index];}
