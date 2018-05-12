@@ -239,8 +239,8 @@ TrafficManager::TrafficManager( const Configuration &config, const vector<Networ
     _last_class.resize(_nodes);
 
     for ( int source = 0; source < _nodes; ++source ) {
-        for (int subn = 0; subn < _nets[0]->nn; ++ subn) {
-            int fake_nodeid = source * _nets[0]->nn + subn;
+        for (int subn = 0; subn < _net[0]->nn; ++ subn) {
+            int fake_nodeid = source * _net[0]->nn + subn;
             _buf_states[fake_nodeid].resize(_subnets);
             _last_vc[fake_nodeid].resize(_subnets);
             for ( int subnet = 0; subnet < _subnets; ++subnet ) {
@@ -1017,6 +1017,8 @@ void TrafficManager::_Step( )
     assert(!_hold_switch_for_packet);
     for (int subnet = 0; subnet < _subnets; ++subnet) {
         for (int n = 0; n < _nodes; ++n) {
+            Flit * f = NULL;
+            BufferState * dest_buf = NULL;
             for (int i = 1; i <= _classes; ++i) {
               int const last_class = _last_class[n][subnet];
               int const c = (last_class + i) % _classes;
@@ -1029,8 +1031,6 @@ void TrafficManager::_Step( )
               assert(cf);
               assert(cf->cl == c);
 
-              Flit * f = NULL;
-              BufferState * dest_buf = NULL;
 
               if(cf->subnetwork != subnet) {
                   continue;
@@ -1084,7 +1084,7 @@ void TrafficManager::_Step( )
                                  << "Finding output VC for flit " << cf->id
                                  << ":" << endl;
                   }
-                  int subn = _nets[0]->ChooseSubnet(cf, n);
+                  int subn = _net[0]->ChooseSubnet(cf, n);
                   int fake_nodeid = subn * _nodes + n;
                   dest_buf = _buf_states[fake_nodeid][subnet];
                   for(int i = 1; i <= vc_count; ++i) {
@@ -1220,7 +1220,9 @@ void TrafficManager::_Step( )
 
     for(int subnet = 0; subnet < _subnets; ++subnet) {
         for(int n = 0; n < _nodes; ++n) {
-            map<int, Flit *>::const_iterator iter = flits[subnet].find(n);
+          for ( int subn = 0; subn < _net[0]->nn; ++subn) {
+            int fake_nodeid = subn * _nodes + n;
+            map<int, Flit *>::const_iterator iter = flits[subnet].find(fake_nodeid);
             if(iter != flits[subnet].end()) {
                 Flit * const f = iter->second;
 
@@ -1234,13 +1236,14 @@ void TrafficManager::_Step( )
                 }
                 Credit * const c = Credit::New();
                 c->vc.insert(f->vc);
-                _net[subnet]->WriteCredit(c, n);
+                _net[subnet]->WriteCredit(c, fake_nodeid);
 
 #ifdef TRACK_FLOWS
                 ++_ejected_flits[f->cl][n];
 #endif
 
                 _RetireFlit(f, n);
+              }
             }
         }
         flits[subnet].clear();

@@ -18,10 +18,9 @@ DragonTree::DragonTree(const Configuration& config, const string& name)
 }
 
 DragonTree::~DragonTree() {
-  delete _fattree;
-  delete _flatfly;
-  _fattree = NULL;
-  _flatfly = NULL;
+  for (int i = 0; i < nn; i++) {
+    delete _nets[i];
+  }
 }
 
 void DragonTree::_ComputeSize(const Configuration& config) {
@@ -38,18 +37,21 @@ void DragonTree::RegisterRoutingFunctions() {
 }
 
 void DragonTree::_BuildNet(const Configuration& config) {
+  Network* _fattree, *_flatfly;
   Configuration config_ = Configuration(config);
   cout << "Build ftree" << endl;
   config_.AddStrField("topology", "fattree");
   config_.AddStrField("routing_function", "nca");
   _fattree = Network::New(config_, "dragontree-fattree");
+  _nets.push_back(_fattree);
   
   cout << "Build ffly" << endl;
   config_.AddStrField("topology", "flatfly");
   config_.AddStrField("routing_function", "xyyx");
   _flatfly = Network::New(config_, "dragontree-flatfly");
-  config_.AddStrField("topology", "dragontree");
+  _nets.push_back(_flatfly);
 
+  config_.AddStrField("topology", "dragontree");
   _timed_modules.push_back(_fattree);
   _timed_modules.push_back(_flatfly);
 
@@ -58,58 +60,31 @@ void DragonTree::_BuildNet(const Configuration& config) {
 }
 
 void DragonTree::WriteFlit(Flit *f, int source) {
-  if (_policy == "flatfly") {
-    _flatfly->WriteFlit(f, source);
-  }
-  else if (_policy == "fattree") {
-    _fattree->WriteFlit(f, source);
-  }
-  else {
-    cerr << "Unknown injection policy" << endl;
-    exit(-1);
-  }
+  int real_source, net_id;
+  real_source = source % _nodes;
+  net_id = source / _nodes;
+  _nets[net_id]->WriteFlit(f, real_source);
 
 }
 
 void DragonTree::WriteCredit(Credit *c, int dest) {
-  if (_policy == "flatfly") {
-    _flatfly->WriteCredit(c, dest);
-  }
-  else if (_policy == "fattree") {
-    _fattree->WriteCredit(c, dest);
-  }
-  else {
-    cerr << "Unknown injection policy" << endl;
-    exit(-1);
-  }
+  int real_dest, net_id;
+  real_dest = dest % _nodes;
+  net_id = dest / _nodes;
+  _nets[net_id]->WriteCredit(c, real_dest);
+  
 }
 
 Flit* DragonTree::ReadFlit( int dest ) {
-  Flit* flit_;
-  if (_policy == "flatfly") {
-    flit_ = _flatfly->ReadFlit(dest);
-  }
-  else if (_policy == "fattree") {
-    flit_ = _fattree->ReadFlit(dest);
-  }
-  else {
-    cerr << "Unknown injection policy" << endl;
-    exit(-1);
-  }
-  return flit_;
+  int real_dest, net_id;
+  real_dest = dest % _nodes;
+  net_id = dest / _nodes;
+  return _nets[net_id]->ReadFlit(real_dest);
 }
 
 Credit* DragonTree::ReadCredit( int source ) {
-  Credit* credit_;
-  if (_policy == "flatfly") {
-    credit_ = _flatfly->ReadCredit(source);
-  }
-  else if (_policy == "fattree") {
-    credit_ = _fattree->ReadCredit(source);
-  }
-  else {
-    cerr << "Unknown injection policy" << endl;
-    exit(-1);
-  }
-  return credit_;
+  int real_source, net_id;
+  real_source = source % _nodes;
+  net_id = source / _nodes;
+  return _nets[net_id]->ReadCredit(real_source);
 }

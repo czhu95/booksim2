@@ -2,11 +2,12 @@
 #define _DRAGONTREE_HPP_
 
 #include "network.hpp"
+#include <vector>
 
 class DragonTree : public Network {
 
   int _k;
-  Network *_fattree, *_flatfly;
+  vector<Network *> _nets;
   string _policy;
 
   void _ComputeSize(const Configuration& config);
