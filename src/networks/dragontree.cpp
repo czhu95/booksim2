@@ -8,6 +8,7 @@
 #include "flatfly_onchip.hpp"
 #include "misc_utils.hpp"
 #include "../booksim_config.hpp"
+#include "../random_utils.hpp"
 
 DragonTree::DragonTree(const Configuration& config, const string& name)
     : Network(config, name) {
@@ -88,3 +89,26 @@ Credit* DragonTree::ReadCredit( int source ) {
   net_id = source / _nodes;
   return _nets[net_id]->ReadCredit(real_source);
 }
+
+int DragonTree::ChooseSubnet(const Flit* f, int source) const {
+  assert(f->head);
+  assert(f->src == source);
+  int chosen;
+  if (_policy == "deterministic") {
+    chosen = (f->src + f->dest) % 2;
+  }
+  else if (_policy == "flatfly") {
+    chosen = 1;
+  }
+  else if (_policy == "fattree") {
+    chosen = 0;
+  }
+  else if (_policy == "oblivious") {
+    chosen = RandomInt(1);
+  }
+  else {
+    assert(false);
+  }
+  return chosen;
+}
+

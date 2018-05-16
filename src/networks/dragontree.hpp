@@ -22,6 +22,7 @@ public:
   virtual Flit* ReadFlit( int dest );
   virtual void WriteFlit(Flit *f, int source);
   virtual void WriteCredit(Credit *c, int dest);
+  virtual int ChooseSubnet(const Flit* f, int source) const;
 };
 
 #endif

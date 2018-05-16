@@ -64,6 +64,7 @@ TrafficManager::TrafficManager( const Configuration &config, const vector<Networ
 
     _vcs = config.GetInt("num_vcs");
     _subnets = config.GetInt("subnets");
+    _injection_policy = config.GetStr("injection_policy");
 
     _subnet.resize(Flit::NUM_FLIT_TYPES);
     _subnet[Flit::READ_REQUEST] = config.GetInt("read_request_subnet");
@@ -1084,8 +1085,36 @@ void TrafficManager::_Step( )
                                  << "Finding output VC for flit " << cf->id
                                  << ":" << endl;
                   }
-                  int subn = _net[0]->ChooseSubnet(cf, n);
-                  int fake_nodeid = subn * _nodes + n;
+                  int subn;
+                  int fake_nodeid;
+                  if (_injection_policy == "adaptive") {
+                    bool find_available = false;
+                    assert(_net[0]->nn == 2);
+                    subn = RandomInt(_net[0]->nn - 1);
+                    fake_nodeid = subn * _nodes + n;
+                    dest_buf = _buf_states[fake_nodeid][subnet];
+                    for(int i = 1; i <= vc_count; ++i) {
+                        int const lvc = _last_vc[fake_nodeid][subnet][c];
+                        int const vc =
+                            (lvc < vc_start || lvc > vc_end) ?
+                            vc_start :
+                            (vc_start + (lvc - vc_start + i) % vc_count);
+                        assert((vc >= vc_start) && (vc <= vc_end));
+                        if(!dest_buf->IsAvailableFor(vc)) {
+                        } else if(dest_buf->IsFullFor(vc)) {
+                        } else {
+                            find_available = true;
+                            break;
+                        }
+                    }
+                    if (!find_available) {
+                      subn = 1 - subn;
+                    }
+                  }
+                  else {
+                    subn = _net[0]->ChooseSubnet(cf, n);
+                  }
+                  fake_nodeid = subn * _nodes + n;
                   dest_buf = _buf_states[fake_nodeid][subnet];
                   for(int i = 1; i <= vc_count; ++i) {
                       int const lvc = _last_vc[fake_nodeid][subnet][c];

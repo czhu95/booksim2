@@ -103,7 +103,7 @@ yr = 1;
 
 routing_function = ran_min;
 
-packet_size = 1;
+packet_size = 4;
 
 traffic       = uniform;
 
@@ -121,5 +121,7 @@ speculative = 0;
 
 print_activity = 0;
 
-injection_policy = flatfly;
+injection_policy = adaptive;
 
+injection_rate_uses_flits = 0;
+stats_out = dragontree.m;

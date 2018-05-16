@@ -201,6 +201,8 @@ protected:
 
   map<string, Stats *> _stats;
 
+  string _injection_policy;
+
   // ============ Simulation parameters ============ 
 
   enum eSimState { warming_up, running, draining, done };
