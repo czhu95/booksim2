@@ -42,7 +42,7 @@ void DragonTree::_BuildNet(const Configuration& config) {
   Configuration config_ = Configuration(config);
   cout << "Build ftree" << endl;
   config_.AddStrField("topology", "fattree");
-  config_.AddStrField("routing_function", "nca");
+  config_.AddStrField("routing_function", "dnca");
   _fattree = Network::New(config_, "dragontree-fattree");
   _nets.push_back(_fattree);
   

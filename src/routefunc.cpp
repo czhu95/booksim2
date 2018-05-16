@@ -253,6 +253,55 @@ void tree4_nca( const Router *r, const Flit *f,
   outputs->AddRange( out_port, vcBegin, vcEnd );
 }
 
+void fattree_dnca( const Router *r, const Flit *f,
+               int in_channel, OutputSet* outputs, bool inject)
+{
+  int vcBegin = 0, vcEnd = gNumVCs-1;
+  if ( f->type == Flit::READ_REQUEST ) {
+    vcBegin = gReadReqBeginVC;
+    vcEnd = gReadReqEndVC;
+  } else if ( f->type == Flit::WRITE_REQUEST ) {
+    vcBegin = gWriteReqBeginVC;
+    vcEnd = gWriteReqEndVC;
+  } else if ( f->type ==  Flit::READ_REPLY ) {
+    vcBegin = gReadReplyBeginVC;
+    vcEnd = gReadReplyEndVC;
+  } else if ( f->type ==  Flit::WRITE_REPLY ) {
+    vcBegin = gWriteReplyBeginVC;
+    vcEnd = gWriteReplyEndVC;
+  }
+  assert(((f->vc >= vcBegin) && (f->vc <= vcEnd)) || (inject && (f->vc < 0)));
+
+  int out_port;
+
+  if(inject) {
+
+    out_port = -1;
+
+  } else {
+    
+    assert(gN == 2);
+    int dest = f->dest;
+    int router_id = r->GetID(); //routers are numbered with smallest at the top level
+    int depth = router_id >= gK / 2;
+    int pos = router_id - depth * (gK / 2);
+    if (depth == 0) {
+      out_port = dest / gK;
+    }
+    else if (pos * gK <= dest && (pos + 1) * gK > dest) {
+      out_port = dest % gK;
+    }
+    else {
+      out_port = gK + RandomInt(gK / 2 - 1);
+    }
+  }
+
+  outputs->Clear( );
+
+  outputs->AddRange( out_port, vcBegin, vcEnd );
+}
+
+
 // ============================================================
 //  FATTREE: Nearest Common Ancestor w/ Random  Routing Up
 // ===
@@ -1961,6 +2010,7 @@ void InitializeRoutingMap( const Configuration & config )
   // Balfour-Schultz
   gRoutingFunctionMap["nca_fattree"]         = &fattree_nca;
   gRoutingFunctionMap["anca_fattree"]        = &fattree_anca;
+  gRoutingFunctionMap["dnca_fattree"]        = &fattree_dnca;
   gRoutingFunctionMap["nca_qtree"]           = &qtree_nca;
   gRoutingFunctionMap["nca_tree4"]           = &tree4_nca;
   gRoutingFunctionMap["anca_tree4"]          = &tree4_anca;
