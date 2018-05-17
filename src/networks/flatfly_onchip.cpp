@@ -64,6 +64,7 @@ static int _xcount;
 static int _ycount;
 static int _xrouter;
 static int _yrouter;
+static int gK_ffly;
 
 FlatFlyOnChip::FlatFlyOnChip( const Configuration &config, const string & name ) :
   Network( config, name )
@@ -76,7 +77,7 @@ FlatFlyOnChip::FlatFlyOnChip( const Configuration &config, const string & name )
 
 void FlatFlyOnChip::_ComputeSize( const Configuration &config )
 {
-  _k = config.GetInt( "k" );	// # of routers per dimension
+  _k = config.GetInt( "k" ) / 2;	// # of routers per dimension
   _n = config.GetInt( "n" );	// dimension
   _c = config.GetInt( "c" );    //concentration, may be different from k
   _r = _c + (_k-1)*_n ;		// total radix of the switch  ( # of inputs/outputs)
@@ -89,7 +90,9 @@ void FlatFlyOnChip::_ComputeSize( const Configuration &config )
   _xrouter = config.GetInt("xr");
   _yrouter = config.GetInt("yr");
   assert(_xrouter == _yrouter);
-  gK = _k; 
+  assert(_c == 4);
+  assert(_n == 2);
+  gK_ffly = _k; 
   gN = _n;
   gC = _c;
   
@@ -477,11 +480,11 @@ int flatfly_outport_yx(int dest, int rID) {
   }
 
   for (int d=_dim-1;d >= 0; d--) {
-    int power = powi(gK,d);
+    int power = powi(gK_ffly,d);
     dID = int(dest_rID / power);
     sID = int(rID / power);
     if ( dID != sID ) {
-      output = gC + ((gK-1)*d) - 1;
+      output = gC + ((gK_ffly-1)*d) - 1;
       if (dID > sID) {
 	output += dID;
       } else {
@@ -529,7 +532,7 @@ void valiant_flatfly( const Router *r, const Flit *f, int in_channel,
 
     if ( in_channel < gC ){
       f->ph = 0;
-      f->intm = RandomInt( powi( gK, gN )*gC-1);
+      f->intm = RandomInt( powi( gK_ffly, gN )*gC-1);
     }
 
     int intm = flatfly_transformation(f->intm);
@@ -598,11 +601,11 @@ void min_flatfly( const Router *r, const Flit *f, int in_channel,
 
     int dest  = flatfly_transformation(f->dest);
     int targetr= (int)(dest/gC);
-    //int xdest = ((int)(dest/gC)) % gK;
-    //int xcurr = ((r->GetID())) % gK;
+    //int xdest = ((int)(dest/gC)) % gK_ffly;
+    //int xcurr = ((r->GetID())) % gK_ffly;
 
-    //int ydest = ((int)(dest/gC)) / gK;
-    //int ycurr = ((r->GetID())) / gK;
+    //int ydest = ((int)(dest/gC)) / gK_ffly;
+    //int ycurr = ((r->GetID())) / gK_ffly;
 
     if(targetr==r->GetID()){ //if we are at the final router, yay, output to client
       out_port = dest % gC;
@@ -802,10 +805,10 @@ void ugal_xyyx_flatfly_onchip( const Router *r, const Flit *f, int in_channel,
       cout << *f; exit (-1);
     }
 
-    if (out_port >= gN*(gK-1) + gC)  {
+    if (out_port >= gN*(gK_ffly-1) + gC)  {
       cout << " ERROR: output port too big! " << endl;
       cout << " OUTPUT select: " << out_port << endl;
-      cout << " router radix: " <<  gN*(gK-1) + gK << endl;
+      cout << " router radix: " <<  gN*(gK_ffly-1) + gK_ffly << endl;
       exit (-1);
     }
 
@@ -974,10 +977,10 @@ void ugal_flatfly_onchip( const Router *r, const Flit *f, int in_channel,
       cout << *f; exit (-1);
     }
 
-    if (out_port >= gN*(gK-1) + gC)  {
+    if (out_port >= gN*(gK_ffly-1) + gC)  {
       cout << " ERROR: output port too big! " << endl;
       cout << " OUTPUT select: " << out_port << endl;
-      cout << " router radix: " <<  gN*(gK-1) + gK << endl;
+      cout << " router radix: " <<  gN*(gK_ffly-1) + gK_ffly << endl;
       exit (-1);
     }
 
@@ -1147,10 +1150,10 @@ void ugal_pni_flatfly_onchip( const Router *r, const Flit *f, int in_channel,
       cout << *f; exit (-1);
     }
 
-    if (out_port >= gN*(gK-1) + gC)  {
+    if (out_port >= gN*(gK_ffly-1) + gC)  {
       cout << " ERROR: output port too big! " << endl;
       cout << " OUTPUT select: " << out_port << endl;
-      cout << " router radix: " <<  gN*(gK-1) + gK << endl;
+      cout << " router radix: " <<  gN*(gK_ffly-1) + gK_ffly << endl;
       exit (-1);
     }
 
@@ -1164,29 +1167,29 @@ void ugal_pni_flatfly_onchip( const Router *r, const Flit *f, int in_channel,
   if(inject || (out_port >= gC)) {
 
     // NOTE: for "proper" flattened butterfly configurations (i.e., ones 
-    // derived from flattening an actual butterfly), gK and gC are the same!
-    assert(gK == gC);
+    // derived from flattening an actual butterfly), gK_ffly and gC are the same!
+    assert(gK_ffly == gC);
 
     assert(inject ? (f->ph == -1) : (f->ph == 1 || f->ph == 2));
 
     int next_coord = flatfly_transformation(f->dest);
     if(inject) {
       next_coord /= gC;
-      next_coord %= gK;
+      next_coord %= gK_ffly;
     } else {
-      int next_dim = (out_port - gC) / (gK - 1) + 1;
+      int next_dim = (out_port - gC) / (gK_ffly - 1) + 1;
       if(next_dim == gN) {
 	next_coord %= gC;
       } else {
 	next_coord /= gC;
 	for(int d = 0; d < next_dim; ++d) {
-	  next_coord /= gK;
+	  next_coord /= gK_ffly;
 	}
-	next_coord %= gK;
+	next_coord %= gK_ffly;
       }
     }
-    assert(next_coord >= 0 && next_coord < gK);
-    int vcs_per_dest = (vcEnd - vcBegin + 1) / gK;
+    assert(next_coord >= 0 && next_coord < gK_ffly);
+    int vcs_per_dest = (vcEnd - vcBegin + 1) / gK_ffly;
     assert(vcs_per_dest > 0);
     vcBegin += next_coord * vcs_per_dest;
     vcEnd = vcBegin + vcs_per_dest - 1;
@@ -1210,15 +1213,15 @@ int find_distance (int src, int dest) {
   
   //  cout << " HOP CNT between  src: " << src << " dest: " << dest;
   for (int d=0;d < _dim; d++) {
-    //int _dim_size = powi(gK, d )*gC;
+    //int _dim_size = powi(gK_ffly, d )*gC;
     //if ((int)(src / _dim_size) !=  (int)(dest / _dim_size))
     //   dist++;
-    int src_id = src_tmp % gK;
-    int dest_id = dest_tmp % gK;
+    int src_id = src_tmp % gK_ffly;
+    int dest_id = dest_tmp % gK_ffly;
     if (src_id !=  dest_id)
       dist++;
-    src_tmp = (int) (src_tmp / gK);
-    dest_tmp = (int) (dest_tmp / gK);
+    src_tmp = (int) (src_tmp / gK_ffly);
+    dest_tmp = (int) (dest_tmp / gK_ffly);
   }
   
   //  cout << " : " << dist << endl;
@@ -1245,20 +1248,20 @@ int find_ran_intm (int src, int dest) {
   if (debug) cout << " ............ _ran_dest : " << _ran_dest << endl;
   for (int d=0;d < _dim; d++) {
     
-    _dim_size = powi(gK, d)*gC;
-    if ((src % gK) ==  (dest % gK)) {
-      _ran_dest += (src % gK) * _dim_size;
+    _dim_size = powi(gK_ffly, d)*gC;
+    if ((src % gK_ffly) ==  (dest % gK_ffly)) {
+      _ran_dest += (src % gK_ffly) * _dim_size;
       if (debug) 
-	cout << "    share same dimension : " << d << " int node : " << _ran_dest << " src ID : " << src % gK << endl;
+	cout << "    share same dimension : " << d << " int node : " << _ran_dest << " src ID : " << src % gK_ffly << endl;
     } else {
       // src and dest are in the same dimension "d" + 1
       // ==> thus generate a random destination within
-      _ran_dest += RandomInt(gK - 1) * _dim_size;
+      _ran_dest += RandomInt(gK_ffly - 1) * _dim_size;
       if (debug) 
 	cout << "    different  dimension : " << d << " int node : " << _ran_dest << " _dim_size: " << _dim_size << endl;
     }
-    src = (int) (src / gK);
-    dest = (int) (dest / gK);
+    src = (int) (src / gK_ffly);
+    dest = (int) (dest / gK_ffly);
   }
   
   if (debug) cout << " intermediate destination NODE: " << _ran_dest << endl;
@@ -1283,10 +1286,10 @@ int flatfly_outport(int dest, int rID) {
 
 
   for (int d=0;d < _dim; d++) {
-    dID = (dest_rID % gK);
-    sID = (rID % gK);
+    dID = (dest_rID % gK_ffly);
+    sID = (rID % gK_ffly);
     if ( dID != sID ) {
-      output = gC + ((gK-1)*d) - 1;
+      output = gC + ((gK_ffly-1)*d) - 1;
       if (dID > sID) {
 
 	output += dID;
@@ -1296,8 +1299,8 @@ int flatfly_outport(int dest, int rID) {
       
       return output;
     }
-    dest_rID = (int) (dest_rID / gK);
-    rID      = (int) (rID / gK);
+    dest_rID = (int) (dest_rID / gK_ffly);
+    rID      = (int) (rID / gK_ffly);
   }
   if (output == -1) {
     cout << " ERROR ---- FLATFLY_OUTPORT function : output not found " << endl;
