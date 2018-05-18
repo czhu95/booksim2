@@ -130,7 +130,7 @@ TrafficPattern * TrafficPattern::New(string const & pattern, int nodes,
     }
     result = new BadPermDFlyTrafficPattern(nodes, k, n);
   } else if((pattern_name == "tornado") || (pattern_name == "neighbor") ||
-	    (pattern_name == "badperm_yarc")) {
+	    (pattern_name == "badperm_yarc") || (pattern_name == "dtworst")) {
     bool missing_params = false;
     int k = -1;
     if(params.size() < 1) {
@@ -170,6 +170,8 @@ TrafficPattern * TrafficPattern::New(string const & pattern, int nodes,
       result = new TornadoTrafficPattern(nodes, k, n, xr);
     } else if(pattern_name == "neighbor") {
       result = new NeighborTrafficPattern(nodes, k, n, xr);
+    } else if(pattern_name == "dtworst") {
+      result = new DTWorstTraffic(nodes, k, n, xr);
     } else if(pattern_name == "badperm_yarc") {
       result = new BadPermYarcTrafficPattern(nodes, k, n, xr);
     }
@@ -523,4 +525,16 @@ int HotSpotTrafficPattern::dest(int source)
   }
   assert(_rates.back() > pct);
   return _hotspots.back();
+}
+
+int DTWorstTraffic::dest(int source)
+{
+  assert((source >= 0) && (source < _nodes));
+  assert(_n == 2);
+  int halfk = _k / 2;
+  int x = source / _k;
+  int y = source % _k;
+  x = (x + halfk) % _k;
+  y = (y + halfk) % _k;
+  return x * _k + y;
 }

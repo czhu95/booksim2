@@ -171,4 +171,11 @@ public:
   virtual int dest(int source);
 };
 
+class DTWorstTraffic : public DigitPermutationTrafficPattern {
+  public:
+    DTWorstTraffic(int nodes, int k, int n, int xr = 1) 
+      : DigitPermutationTrafficPattern(nodes, k, n, xr) {}
+    virtual int dest(int source);
+};
+
 #endif
