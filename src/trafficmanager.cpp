@@ -216,6 +216,7 @@ TrafficManager::TrafficManager( const Configuration &config, const vector<Networ
     _traffic.resize(_classes, _traffic.back());
 
     _traffic_pattern.resize(_classes);
+    _traffic_pattern_bak.resize(_classes);
 
     _class_priority = config.GetIntArray("class_priority");
     if(_class_priority.empty()) {
@@ -230,6 +231,7 @@ TrafficManager::TrafficManager( const Configuration &config, const vector<Networ
 
     for(int c = 0; c < _classes; ++c) {
         _traffic_pattern[c] = TrafficPattern::New(_traffic[c], _nodes, &config);
+        _traffic_pattern_bak[c] = TrafficPattern::New("bitcomp", _nodes, &config);
         _injection_process[c] = InjectionProcess::New(injection_process[c], _nodes, _load[c], &config);
     }
 
@@ -967,6 +969,13 @@ void TrafficManager::_Step( )
     }
 
     vector<map<int, Flit *> > flits(_subnets);
+    if (GetSimTime() == 10000) {
+      for(int c = 0; c < _classes; ++c) {
+          delete _traffic_pattern[c];
+          _traffic_pattern[c] = _traffic_pattern_bak[c];
+          _traffic_pattern[c]->reset();
+      }
+    }
 
     for ( int subnet = 0; subnet < _subnets; ++subnet ) {
         for ( int n = 0; n < _nodes; ++n ) {
@@ -982,6 +991,7 @@ void TrafficManager::_Step( )
                                << " from VC " << f->vc
                                << "." << endl;
                 }
+                *gFlitInfo << GetSimTime() << " " << fake_nodeid << endl;
                 flits[subnet].insert(make_pair(fake_nodeid, f));
                 if((_sim_state == warming_up) || (_sim_state == running)) {
                     ++_accepted_flits[f->cl][n];

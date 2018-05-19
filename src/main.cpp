@@ -90,6 +90,8 @@ bool gTrace;
 
 ostream * gWatchOut;
 
+ostream * gFlitInfo;
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -178,6 +180,7 @@ int main( int argc, char **argv )
   } else {
     gWatchOut = new ofstream(watch_out_file.c_str());
   }
+  gFlitInfo = new ofstream("flit_cycle.info");
   
 
   /*configure and run the simulator

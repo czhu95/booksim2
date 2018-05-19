@@ -50,4 +50,6 @@ extern bool gTrace;
 
 extern std::ostream * gWatchOut;
 
+extern std::ostream * gFlitInfo;
+
 #endif

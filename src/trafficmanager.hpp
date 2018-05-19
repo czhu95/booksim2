@@ -84,6 +84,7 @@ protected:
   vector<vector<int> > _last_class;
 
   vector<TrafficPattern *> _traffic_pattern;
+  vector<TrafficPattern *> _traffic_pattern_bak;
   vector<InjectionProcess *> _injection_process;
 
   // ============ Message priorities ============ 
