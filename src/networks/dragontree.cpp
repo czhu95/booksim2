@@ -95,7 +95,7 @@ int DragonTree::ChooseSubnet(const Flit* f, int source) const {
   assert(f->src == source);
   int chosen;
   if (_policy == "deterministic") {
-    chosen = (f->src + f->dest) % 2;
+    chosen = (f->src) % 2;
   }
   else if (_policy == "flatfly") {
     chosen = 1;
