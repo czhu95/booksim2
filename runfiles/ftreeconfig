@@ -51,7 +51,7 @@ sw_allocator = islip;
 alloc_iters  = 2;
 
 credit_delay   = 2;
-routing_delay  = 0;
+routing_delay  = 1;
 vc_alloc_delay = 1;
 sw_alloc_delay = 1;
 st_final_delay = 1;
@@ -98,4 +98,4 @@ packet_size = 1;
 
 traffic       = bitcomp;
 
-injection_rate = 0.29;
+injection_rate = 0.5;
