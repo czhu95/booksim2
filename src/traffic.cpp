@@ -303,8 +303,8 @@ int TornadoTrafficPattern::dest(int source)
 
   for(int n = 0; n < _n; ++n) {
     result += offset *
-      (((source / offset) % (_xr * _k) + ((_xr * _k + 1) / 2 - 1)) % (_xr * _k));
-    offset *= (_xr * _k);
+      (((source / offset) % (_k) + ((_k + 1) / 2 - 1)) % (_k));
+    offset *= (_k);
   }
   return result;
 }
