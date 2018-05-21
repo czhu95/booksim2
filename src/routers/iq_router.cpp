@@ -368,6 +368,7 @@ void IQRouter::_InputQueuing( )
       *gWatchOut << ")." << endl;
     }
     cur_buf->AddFlit(vc, f);
+    if (f->head) f->stime = GetSimTime();
 
 #ifdef TRACK_FLOWS
     ++_stored_flits[f->cl][input];
@@ -533,7 +534,7 @@ void IQRouter::_RouteUpdate( )
     }
 
     cout << "r "
-        << GetSimTime() << " "
+        << f->stime     << " "
         << _id          << " "
         << input        << " "
         << vc           << " ";
