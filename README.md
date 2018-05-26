@@ -7,7 +7,11 @@ Routing data are recorded in text file in log directory after running booksim fo
 
 `./utils/run.sh ./runfiles/RUN_FILE`
 
-log file can be processed by running utils/routing.py log/LOG_FILE, which will generate a python pickle file "routing.pkl" under root directory.
+log file can be processed by running python3
+
+`python utils/routing.py log/LOG_FILE`
+
+which will generate a python pickle file "routing.pkl" under root directory.
 
 The pickle file contains a python nested list for all routing information:
 
