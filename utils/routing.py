@@ -40,6 +40,18 @@ def extract_param(lines):
 
     return num_vcs, num_switches, num_ports
 
+def generate_training_data(info, num_vcs, num_switches, num_ports):
+    cycle_info = [r[0] for r in routing_info]
+    min_cycle = min(cycle_info)
+    max_cycle = max(cycle_info)
+    data = [[[[] for _ in range(min_cycle, max_cycle + 1)]
+         for _ in range(num_ports)] for _ in range(num_switches)]
+    for r in routing_info:
+        # each vc in each port in each router: out_port, out_vc_start, out_vc_end, priority
+        assert(data[r[1]][r[2]][r[0]-min_cycle] == [])
+        data[r[1]][r[2]][r[0]-min_cycle] = [r[4], r[5], r[6], r[7]]
+
+    return data
 
 
 if __name__ == "__main__":
@@ -49,12 +61,9 @@ if __name__ == "__main__":
     routing_info = extract_routing(lines)
     num_vcs, num_switches, num_ports = extract_param(lines)
 
-    data = [[[[] for _ in range(num_vcs)] for _ in range(num_ports)] for _ in range(num_switches)]
-    for r in routing_info:
-        # each vc in each port in each router: out_port, out_vc_start, out_vc_end, priority
-        data[r[1]][r[2]][r[3]] = [r[0], r[4], r[5], r[6], r[7]]
+    data = generate_training_data(routing_info, num_vcs, num_switches, num_ports)
 
     with open('routing.pkl', 'wb') as fid:
         pickle.dump(data, fid)
 
-    print(data)
+    # print(data)
