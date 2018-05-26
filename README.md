@@ -3,13 +3,15 @@ BookSim Interconnection Network Simulator
 
 ### Dumping routing data
 
-Routing data are recorded in text file in log directory after running booksim for any configurations.
+Routing data are recorded in text file in log directory after running booksim for any configurations through
+
+`./utils/run.sh ./runfiles/RUN_FILE`
 
 log file can be processed by running utils/routing.py log/LOG_FILE, which will generate a python pickle file "routing.pkl" under root directory.
 
 The pickle file contains a python nested list for all routing information:
 
-data[router_id][in_port][in_vc] = [cycle, out_port, out_vc_start, out_vc_end, priority]
+data[router_id][in_port][cycle] = [out_port, out_vc_start, out_vc_end, priority]
 
 ### Original README
 
